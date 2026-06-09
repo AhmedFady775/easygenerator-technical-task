@@ -102,7 +102,8 @@ jobs:
             EOF
 
             echo "==> Pulling latest code"
-            git pull origin master
+            git fetch origin master
+            git reset --hard origin/master
 
             echo "==> Rebuilding and restarting containers"
             docker compose up -d --build --remove-orphans
