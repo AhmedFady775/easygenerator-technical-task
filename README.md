@@ -1,34 +1,44 @@
 # EasyGenerator Auth
 
-Full-stack user authentication application built with NestJS (backend) and React (frontend).
+Full-stack authentication application built with NestJS, MongoDB, React, and TypeScript.
 
 ## Stack
 
-| Layer    | Technology                                              |
-| -------- | ------------------------------------------------------- |
+| Layer | Technology |
+| --- | --- |
 | Frontend | React 19, TypeScript, Vite, React Router, React Hook Form, Zod |
-| Backend  | NestJS, MongoDB (Mongoose), JWT + httpOnly refresh cookies, Passport |
-| Docs     | Swagger / OpenAPI at `/api/docs`                        |
-| Ops      | Docker Compose, GitHub Actions CI/CD                    |
+| Backend | NestJS, MongoDB with Mongoose, Passport, JWT, httpOnly cookies |
+| Docs | Swagger / OpenAPI at `/api/docs` |
+| Ops | Docker Compose, Caddy, GitHub Actions CI/CD |
 
----
+## Features
 
-## Local development
+- Sign up with email, name, and password validation.
+- Sign in with email and password.
+- Protected `GET /auth/me` endpoint.
+- Application page with `Welcome to the application.` and logout.
+- Password hashing with bcrypt.
+- Access and refresh tokens stored in httpOnly cookies.
+- Request validation, centralized error handling, logging, throttling, health checks, Swagger docs, and tests.
+
+## Local Development
 
 ### Prerequisites
-- Node.js ≥ 20
-- A MongoDB Atlas cluster (or local MongoDB)
+
+- Node.js >= 20
+- MongoDB Atlas or local MongoDB
 
 ### Backend
 
 ```bash
 cd backend
-cp .env.example .env   # then fill in JWT_SECRET and JWT_REFRESH_SECRET
+cp .env.example .env
 npm install
 npm run start:dev
 ```
 
-API: **http://localhost:3000** · Swagger: **http://localhost:3000/api/docs**
+Backend: `http://localhost:3000`
+Swagger: `http://localhost:3000/api/docs`
 
 ### Frontend
 
@@ -38,170 +48,183 @@ npm install
 npm run dev
 ```
 
-App: **http://localhost:5173**
+Frontend: `http://localhost:5173`
 
----
+The Vite dev server proxies `/api` to `http://localhost:3000`.
 
-## Running with Docker Compose (local)
+## Docker Compose
 
 ```bash
 cp .env.example .env
-# Edit .env — set JWT_SECRET, JWT_REFRESH_SECRET, FRONTEND_URL
+# Fill in MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, FRONTEND_URL
 docker compose up -d --build
 ```
 
-- Frontend → http://localhost
-- Backend  → http://localhost:3000
-- Swagger  → http://localhost:3000/api/docs
+Local URLs:
 
----
+- App: `http://localhost`
+- Backend: `http://localhost:3000`
+- Swagger: `http://localhost:3000/api/docs`
 
-## EC2 deployment
+## HTTPS With Caddy
 
-### 1. Provision the instance
+Caddy is included in `docker-compose.yml` and owns ports `80` and `443`.
+It proxies:
 
-- Ubuntu 22.04 LTS, minimum t3.small
-- Open inbound ports: **22** (SSH), **80** (HTTP), **443** (HTTPS if TLS)
-- Assign an Elastic IP or note the public IP
+- `/api/*` to the NestJS backend
+- all other requests to the frontend container
 
-### 2. Install dependencies on EC2
+For a real HTTPS deployment, set:
 
-```bash
-# Docker
-sudo apt update && sudo apt install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-  | sudo tee /etc/apt/sources.list.d/docker.list
-sudo apt update && sudo apt install -y docker-ce docker-ce-cli docker-compose-plugin
-sudo usermod -aG docker $USER   # re-login after this
+```env
+CADDY_DOMAIN=your-domain.com
+FRONTEND_URL=https://your-domain.com
+COOKIE_SECURE=true
 ```
 
-### 3. Clone the repo and configure secrets
+If you do not own a domain, a free wildcard DNS hostname such as `sslip.io` can be used. For example:
+
+```env
+CADDY_DOMAIN=16-170-215-160.sslip.io
+FRONTEND_URL=https://16-170-215-160.sslip.io
+COOKIE_SECURE=true
+```
+
+Make sure your EC2 security group allows inbound `80` and `443`.
+
+## EC2 Deployment
+
+1. Provision an Ubuntu EC2 instance.
+2. Install Docker and the Docker Compose plugin.
+3. Clone the repository:
 
 ```bash
 git clone https://github.com/AhmedFady775/easygenerator-technical-task.git /opt/easygenerator
 cd /opt/easygenerator
-
 cp .env.example .env
-# Generate secrets:  openssl rand -hex 32
-nano .env
 ```
 
-`.env` content:
-```
+4. Fill in `.env`:
+
+```env
+MONGODB_URI=<mongodb connection string>
 JWT_SECRET=<64-char random string>
 JWT_REFRESH_SECRET=<different 64-char random string>
-FRONTEND_URL=http://<your-ec2-public-ip>
+FRONTEND_URL=https://<public-hostname>
+CADDY_DOMAIN=<public-hostname>
+COOKIE_SECURE=true
+VITE_API_URL=/api
 ```
 
-### 4. First deploy
+5. Start the app:
 
 ```bash
-cd /opt/easygenerator
 docker compose up -d --build
 ```
 
-### 5. Set up GitHub Actions for automatic deploys
+## GitHub Actions
 
-Add these **Repository Secrets** (`Settings → Secrets → Actions`):
+The pipeline runs backend CI, frontend CI, and deploys on pushes to `master`.
+
+Required repository secrets:
 
 | Secret | Value |
-|--------|-------|
+| --- | --- |
 | `EC2_HOST` | EC2 public IP or hostname |
-| `EC2_USER` | `ubuntu` (or your SSH user) |
-| `EC2_SSH_KEY` | Contents of your `.pem` private key |
-| `EC2_APP_PATH` | `/opt/easygenerator` |
+| `EC2_USER` | SSH user, for example `ubuntu` |
+| `EC2_SSH_KEY` | Contents of the private SSH key |
+| `EC2_APP_PATH` | Deployment path, for example `/opt/easygenerator` |
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_SECRET` | Access token signing secret |
+| `JWT_REFRESH_SECRET` | Refresh token signing secret |
+| `FRONTEND_URL` | Public app URL |
+| `CADDY_DOMAIN` | Hostname served by Caddy |
+| `COOKIE_SECURE` | `true` for HTTPS deployments |
 
-After that, every push to `master` that passes CI will automatically deploy to EC2.
+Deploy flow:
 
----
-
-## CI/CD pipeline
-
-```
+```text
 push to master
-    │
-    ├─ Backend CI  (type-check → unit tests → e2e → build)
-    ├─ Frontend CI (type-check → build)
-    │
-    └─ Deploy (only if both CI jobs pass)
-           SSH into EC2
-           git fetch + git reset --hard origin/master
-           docker compose up -d --build
-           health-check /health → rollback if unhealthy
+  backend CI: type-check, unit tests, e2e tests, build
+  frontend CI: type-check, build
+  deploy:
+    git fetch + reset on EC2
+    docker compose build backend
+    docker compose build frontend
+    docker compose up -d --remove-orphans
+    health-check /health and rollback if unhealthy
 ```
 
----
+## API Endpoints
 
-## API endpoints
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/auth/signup` | public | Register user and set auth cookies |
+| `POST` | `/auth/signin` | public | Sign in and set auth cookies |
+| `POST` | `/auth/refresh` | refresh cookie | Rotate auth cookies |
+| `POST` | `/auth/logout` | access cookie | Revoke refresh token and clear cookies |
+| `GET` | `/auth/me` | access cookie | Protected endpoint returning the current user |
+| `GET` | `/health` | public | Liveness probe |
+| `GET` | `/health/ready` | public | MongoDB readiness probe |
 
-| Method | Path           | Auth     | Description                          |
-| ------ | -------------- | -------- | ------------------------------------ |
-| POST   | /auth/signup   | —        | Register; sets httpOnly refresh cookie |
-| POST   | /auth/signin   | —        | Sign in; sets httpOnly refresh cookie  |
-| POST   | /auth/refresh  | cookie   | Issue new access token (token rotation) |
-| POST   | /auth/logout   | access cookie | Revoke refresh token + clear both cookies |
-| GET    | /auth/me       | access cookie | **Protected** — get current user profile |
-| GET    | /health        | —        | Liveness probe                       |
-| GET    | /health/ready  | —        | Readiness probe (MongoDB ping)       |
+## Environment Variables
 
----
+### Root `.env`
 
-## Environment variables
+| Variable | Description |
+| --- | --- |
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_SECRET` | Access token signing secret |
+| `JWT_REFRESH_SECRET` | Refresh token signing secret |
+| `FRONTEND_URL` | Allowed CORS origin |
+| `COOKIE_SECURE` | Set `true` for HTTPS cookies |
+| `CADDY_DOMAIN` | Hostname served by Caddy |
+| `VITE_API_URL` | Frontend API base URL, defaults to `/api` |
 
-### Root `.env` (docker-compose)
+### `backend/.env`
 
-| Variable             | Description                          |
-| -------------------- | ------------------------------------ |
-| `JWT_SECRET`         | Access token signing secret          |
-| `JWT_REFRESH_SECRET` | Refresh token signing secret         |
-| `FRONTEND_URL`       | Allowed CORS origin                  |
+Used for backend-only local development.
 
-### `backend/.env` (local dev only)
+| Variable | Default |
+| --- | --- |
+| `MONGODB_URI` | `mongodb://localhost:27017/easygenerator` |
+| `JWT_SECRET` | required |
+| `JWT_REFRESH_SECRET` | required |
+| `PORT` | `3000` |
+| `FRONTEND_URL` | `http://localhost:5173` |
+| `COOKIE_SECURE` | `false` |
 
-| Variable             | Default                                   |
-| -------------------- | ----------------------------------------- |
-| `MONGODB_URI`        | `mongodb://localhost:27017/easygenerator` |
-| `JWT_SECRET`         | *(required)*                              |
-| `JWT_REFRESH_SECRET` | *(required)*                              |
-| `PORT`               | `3000`                                    |
-| `FRONTEND_URL`       | `http://localhost:5173`                   |
-
----
-
-## Running tests
+## Tests
 
 ```bash
 cd backend
-npm test            # unit tests (co-located with modules)
-npm run test:e2e    # e2e tests via MongoMemoryServer (no MongoDB needed)
-npm run test:cov    # coverage report
+npm test
+npm run test:e2e
+npm run test:cov
 ```
 
----
-
-## Project structure
-
+```bash
+cd frontend
+npm run build
 ```
+
+## Project Structure
+
+```text
 easygenerator/
-├── .github/workflows/ci.yml   # CI/CD pipeline
-├── docker-compose.yml
-├── .env.example
-├── backend/
-│   ├── Dockerfile
-│   └── src/
-│       ├── auth/              # Controller, service, DTOs, JWT + refresh strategies
-│       ├── users/             # Service + Mongoose schema
-│       ├── health/            # /health endpoint
-│       └── common/            # Exception filter, logging middleware
-└── frontend/
-    ├── Dockerfile
-    ├── nginx.conf
-    └── src/
-        ├── api/               # Axios instance (withCredentials — cookies sent automatically)
-        ├── components/        # AuthProvider (context), PasswordInput
-        ├── hooks/             # useAuth context consumer
-        └── pages/             # SignUp, SignIn, AppPage
+  .github/workflows/ci.yml
+  .env.example
+  AI.md
+  Caddyfile
+  docker-compose.yml
+  backend/
+    src/auth/
+    src/users/
+    src/health/
+    src/common/
+  frontend/
+    src/api/
+    src/components/
+    src/hooks/
+    src/pages/
 ```

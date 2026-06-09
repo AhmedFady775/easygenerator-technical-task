@@ -27,8 +27,10 @@ describe('UsersService', () => {
     .fn()
     .mockImplementation(() => ({ save: mockSave })) as jest.Mock & {
     findOne: jest.Mock;
+    findById: jest.Mock;
   };
   MockUserModel.findOne = jest.fn();
+  MockUserModel.findById = jest.fn();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -92,6 +94,17 @@ describe('UsersService', () => {
       const result = await service.findByEmail('ghost@example.com');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('findById', () => {
+    it('returns the user document when found', async () => {
+      MockUserModel.findById.mockResolvedValue(savedUser);
+
+      const result = await service.findById('abc123');
+
+      expect(MockUserModel.findById).toHaveBeenCalledWith('abc123');
+      expect(result).toEqual(savedUser);
     });
   });
 });

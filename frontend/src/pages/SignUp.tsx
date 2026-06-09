@@ -43,7 +43,7 @@ export function SignUp() {
       const { confirmPassword: _, ...payload } = data;
       const res = await signUp(payload);
       login(res.user);
-      navigate('/app');
+      navigate('/app', { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

@@ -30,7 +30,7 @@ export function SignIn() {
     try {
       const res = await signIn(data);
       login(res.user);
-      navigate('/app');
+      navigate('/app', { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

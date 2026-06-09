@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import type { Response as ExpressResponse } from 'express';
 
 const mockTokens = {
@@ -21,6 +23,10 @@ const mockAuthService: Partial<AuthService> = {
   logout: jest.fn(),
 };
 
+const mockUsersService: Partial<UsersService> = {
+  findById: jest.fn(),
+};
+
 // Minimal response mock — only what the controller uses
 function mockRes(): ExpressResponse {
   return {
@@ -35,7 +41,10 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: UsersService, useValue: mockUsersService },
+      ],
     }).compile();
 
     controller = module.get(AuthController);
@@ -108,12 +117,23 @@ describe('AuthController', () => {
   });
 
   describe('getMe', () => {
-    it('returns the user payload from the request', () => {
+    it('returns the user profile from the database', async () => {
       const req = { user: { userId: 'user-id-1', email: 'alice@example.com' } };
+      (mockUsersService.findById as jest.Mock).mockResolvedValue(mockUser);
 
-      const result = controller.getMe(req as never);
+      const result = await controller.getMe(req as never);
 
-      expect(result).toEqual({ user: req.user });
+      expect(mockUsersService.findById).toHaveBeenCalledWith('user-id-1');
+      expect(result).toEqual({ user: mockUser });
+    });
+
+    it('throws UnauthorizedException when the user no longer exists', async () => {
+      const req = { user: { userId: 'missing-id', email: 'alice@example.com' } };
+      (mockUsersService.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(controller.getMe(req as never)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

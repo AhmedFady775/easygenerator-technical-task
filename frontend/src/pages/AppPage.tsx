@@ -11,7 +11,7 @@ export function AppPage() {
       await apiLogout();
     } finally {
       logout();
-      navigate('/signin');
+      navigate('/signin', { replace: true });
     }
   };
 

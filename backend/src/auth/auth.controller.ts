@@ -8,6 +8,7 @@ import {
   Response,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RefreshJwtAuthGuard } from './refresh-jwt-auth.guard';
+import { UsersService } from '../users/users.service';
 
 const REFRESH_COOKIE = 'refreshToken';
 const ACCESS_COOKIE = 'accessToken';
@@ -53,7 +55,10 @@ interface AuthenticatedRequest extends ExpressRequest {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+  ) {}
 
   @Post('signup')
   @Throttle({
@@ -151,7 +156,9 @@ export class AuthController {
     description: 'Returns authenticated user profile',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getMe(@Request() req: AuthenticatedRequest) {
-    return { user: req.user };
+  async getMe(@Request() req: AuthenticatedRequest) {
+    const user = await this.usersService.findById(req.user.userId);
+    if (!user) throw new UnauthorizedException('User not found');
+    return { user };
   }
 }

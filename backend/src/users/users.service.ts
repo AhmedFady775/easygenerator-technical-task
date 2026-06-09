@@ -33,6 +33,10 @@ export class UsersService {
     return this.userModel.findOne({ email: email.toLowerCase() });
   }
 
+  async findById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId);
+  }
+
   async setRefreshToken(userId: string, token: string | null): Promise<void> {
     const hash = token ? await bcrypt.hash(token, 10) : null;
     await this.userModel.findByIdAndUpdate(userId, { refreshTokenHash: hash });
