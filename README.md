@@ -38,7 +38,7 @@ npm run start:dev
 ```
 
 Backend: `http://localhost:3000`
-Swagger: `http://localhost:3000/api/docs`
+Swagger: enabled in local development; set `SWAGGER_ENABLED=true` to expose it in a non-production environment.
 
 ### Frontend
 
@@ -180,6 +180,7 @@ push to master
 | `COOKIE_SECURE` | Set `true` for HTTPS cookies |
 | `CADDY_DOMAIN` | Hostname served by Caddy |
 | `VITE_API_URL` | Frontend API base URL, defaults to `/api` |
+| `SWAGGER_ENABLED` | Set `true` to expose Swagger outside production |
 
 ### `backend/.env`
 
@@ -193,6 +194,7 @@ Used for backend-only local development.
 | `PORT` | `3000` |
 | `FRONTEND_URL` | `http://localhost:5173` |
 | `COOKIE_SECURE` | `false` |
+| `SWAGGER_ENABLED` | `false` |
 
 ## Tests
 

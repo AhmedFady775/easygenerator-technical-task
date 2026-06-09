@@ -11,6 +11,8 @@ import { GlobalExceptionFilter } from './common/http-exception.filter';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  const swaggerEnabled =
+    process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true';
 
   // Security headers — CSP disabled so Swagger UI inline scripts are allowed
   app.use(helmet({ contentSecurityPolicy: false }));
@@ -40,16 +42,18 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('EasyGenerator Auth API')
-    .setDescription(
-      'User authentication API — refresh token delivered as httpOnly cookie',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('EasyGenerator Auth API')
+      .setDescription(
+        'User authentication API — refresh token delivered as httpOnly cookie',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   // Graceful shutdown
   app.enableShutdownHooks();
@@ -57,6 +61,8 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.log(`Application running on http://localhost:${port}`);
-  logger.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  if (swaggerEnabled) {
+    logger.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  }
 }
 void bootstrap();
