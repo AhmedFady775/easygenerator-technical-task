@@ -106,8 +106,12 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
 
-            echo "==> Rebuilding and restarting containers"
-            docker compose up -d --build --remove-orphans
+            echo "==> Rebuilding images"
+            docker compose build backend
+            docker compose build frontend
+
+            echo "==> Restarting containers"
+            docker compose up -d --remove-orphans
 
             echo "==> Removing dangling images"
             docker image prune -f
