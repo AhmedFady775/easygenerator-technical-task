@@ -103,6 +103,10 @@ Previously only the refresh token was an httpOnly cookie; the access token lived
 - Header changed from a solid blue bar to a white bar with a bottom border (`border-b border-gray-200`) — cleaner, closer to a standard app shell.
 - User info area now shows an avatar circle with initials derived from `user.name`, stacked name + email, and a minimal outlined "Sign out" button.
 - Main content simplified to a bare greeting (`Good to see you, {firstName}!`) directly on the background — removed the white welcome card wrapper.
+- Animated background orbs added to the main area (same three-layer float/drift system as the auth pages) using `bg-blue-100` and `bg-indigo-100` tones to stay subtle on the light background.
+
+### Auth page motion
+- Right panel on both `SignIn` and `SignUp` upgraded from a flat blue gradient to an animated layer: two large blurred orbs (`bg-white/10 blur-2xl/3xl`), one drifting smaller orb, and two thin outline circles — all driven by three CSS keyframe animations (`float` 7s, `float-slow` 10s, `drift` 13s) with different durations so they never sync.
 
 ---
 
