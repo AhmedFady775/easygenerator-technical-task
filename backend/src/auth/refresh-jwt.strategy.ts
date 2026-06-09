@@ -12,14 +12,18 @@ interface RefreshPayload {
 }
 
 @Injectable()
-export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class RefreshJwtStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(
     configService: ConfigService,
     private usersService: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => (req.cookies as Record<string, string>)?.refreshToken ?? null,
+        (req: Request) =>
+          (req.cookies as Record<string, string>)?.refreshToken ?? null,
       ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_REFRESH_SECRET') as string,
@@ -27,8 +31,12 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
   }
 
   async validate(payload: RefreshPayload) {
-    const user = await this.usersService.verifyRefreshToken(payload.sub, payload.jti);
-    if (!user) throw new UnauthorizedException('Invalid or expired refresh token');
+    const user = await this.usersService.verifyRefreshToken(
+      payload.sub,
+      payload.jti,
+    );
+    if (!user)
+      throw new UnauthorizedException('Invalid or expired refresh token');
     return { userId: payload.sub, email: payload.email };
   }
 }

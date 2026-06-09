@@ -21,7 +21,6 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.set('toJSON', {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transform: (_doc: unknown, ret: any) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     delete ret.password;

@@ -21,8 +21,8 @@ import { LoggingMiddleware } from './common/logging.middleware';
     }),
     ThrottlerModule.forRoot({
       throttlers: [
-        { name: 'short', ttl: 1000, limit: 5 },       // 5 req/sec
-        { name: 'medium', ttl: 60_000, limit: 100 },   // 100 req/min
+        { name: 'short', ttl: 1000, limit: 5 }, // 5 req/sec
+        { name: 'medium', ttl: 60_000, limit: 100 }, // 100 req/min
       ],
     }),
     TerminusModule,
@@ -30,9 +30,7 @@ import { LoggingMiddleware } from './common/logging.middleware';
     UsersModule,
   ],
   controllers: [HealthController],
-  providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

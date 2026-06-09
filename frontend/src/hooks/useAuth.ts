@@ -1,31 +1,18 @@
-import { useState, useCallback } from 'react';
-import { setAccessToken, type User } from '../api/auth';
+import { createContext, useContext } from 'react';
+import type { User } from '../api/auth';
 
-const USER_KEY = 'authUser';
-
-function loadUser(): User | null {
-  try {
-    const raw = sessionStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
-  } catch {
-    return null;
-  }
+export interface AuthContextValue {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (user: User) => void;
+  logout: () => void;
 }
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(loadUser);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
-  const login = useCallback((accessToken: string, userData: User) => {
-    setAccessToken(accessToken);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(userData));
-    setUser(userData);
-  }, []);
-
-  const logout = useCallback(() => {
-    setAccessToken(null);
-    sessionStorage.removeItem(USER_KEY);
-    setUser(null);
-  }, []);
-
-  return { user, login, logout, isAuthenticated: !!user };
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
 }

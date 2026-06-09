@@ -13,12 +13,15 @@ export class SignUpDto {
 
   @ApiProperty({
     example: 'Password1!',
-    description: 'Min 8 chars, at least one letter, one number, one special character',
+    description:
+      'Min 8 chars, at least one letter, one number, one special character',
   })
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters' })
   @Matches(/[a-zA-Z]/, { message: 'Password must contain at least one letter' })
   @Matches(/[0-9]/, { message: 'Password must contain at least one number' })
-  @Matches(/[^a-zA-Z0-9]/, { message: 'Password must contain at least one special character' })
+  @Matches(/[^a-zA-Z0-9]/, {
+    message: 'Password must contain at least one special character',
+  })
   password: string;
 }

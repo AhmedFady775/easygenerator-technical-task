@@ -29,10 +29,13 @@ const mockUsersService: Partial<UsersService> = {
 
 const mockJwtService: Partial<JwtService> = {
   // Returns different tokens based on expiry — mirrors issueTokenPair logic
-  signAsync: jest.fn().mockImplementation(
-    (_payload: unknown, options: { expiresIn: string }) =>
-      Promise.resolve(options?.expiresIn === '15m' ? ACCESS_TOKEN : REFRESH_TOKEN),
-  ),
+  signAsync: jest
+    .fn()
+    .mockImplementation((_payload: unknown, options: { expiresIn: string }) =>
+      Promise.resolve(
+        options?.expiresIn === '15m' ? ACCESS_TOKEN : REFRESH_TOKEN,
+      ),
+    ),
 };
 
 const mockConfigService: Partial<ConfigService> = {
@@ -57,14 +60,22 @@ describe('AuthService', () => {
   });
 
   describe('signUp', () => {
-    const dto = { email: 'alice@example.com', name: 'Alice', password: 'Password1!' };
+    const dto = {
+      email: 'alice@example.com',
+      name: 'Alice',
+      password: 'Password1!',
+    };
 
     it('creates the user and returns a token pair with the user', async () => {
       (mockUsersService.create as jest.Mock).mockResolvedValue(storedUser);
 
       const result = await service.signUp(dto);
 
-      expect(mockUsersService.create).toHaveBeenCalledWith(dto.email, dto.name, dto.password);
+      expect(mockUsersService.create).toHaveBeenCalledWith(
+        dto.email,
+        dto.name,
+        dto.password,
+      );
       expect(result.tokens.accessToken).toBe(ACCESS_TOKEN);
       expect(result.tokens.refreshToken).toBe(REFRESH_TOKEN);
       expect(result.user).toBe(storedUser);
@@ -89,7 +100,10 @@ describe('AuthService', () => {
       const result = await service.signIn(dto);
 
       expect(mockUsersService.findByEmail).toHaveBeenCalledWith(dto.email);
-      expect(bcrypt.compare).toHaveBeenCalledWith(dto.password, storedUser.password);
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        dto.password,
+        storedUser.password,
+      );
       expect(result.tokens.accessToken).toBe(ACCESS_TOKEN);
       expect(result.user).toBe(storedUser);
     });

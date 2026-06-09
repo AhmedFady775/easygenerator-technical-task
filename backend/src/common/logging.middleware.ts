@@ -12,7 +12,8 @@ export class LoggingMiddleware implements NestMiddleware {
     res.on('finish', () => {
       const { statusCode } = res;
       const ms = Date.now() - start;
-      const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'log';
+      const level =
+        statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'log';
       this.logger[level](`${method} ${originalUrl} ${statusCode} +${ms}ms`);
     });
 

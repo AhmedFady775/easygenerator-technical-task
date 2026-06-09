@@ -29,8 +29,12 @@ export class AuthService {
   ) {}
 
   async signUp(dto: SignUpDto): Promise<AuthResult> {
-    const user = await this.usersService.create(dto.email, dto.name, dto.password);
-    const tokens = await this.issueTokenPair((user._id as object).toString(), user.email);
+    const user = await this.usersService.create(
+      dto.email,
+      dto.name,
+      dto.password,
+    );
+    const tokens = await this.issueTokenPair(String(user._id), user.email);
     this.logger.log(`Sign-up successful: ${dto.email}`);
     return { tokens, user };
   }
@@ -42,7 +46,7 @@ export class AuthService {
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
 
-    const tokens = await this.issueTokenPair((user._id as object).toString(), user.email);
+    const tokens = await this.issueTokenPair(String(user._id), user.email);
     this.logger.log(`Sign-in successful: ${dto.email}`);
     return { tokens, user };
   }
@@ -57,18 +61,27 @@ export class AuthService {
     await this.usersService.setRefreshToken(userId, null);
   }
 
-  private async issueTokenPair(userId: string, email: string): Promise<TokenPair> {
+  private async issueTokenPair(
+    userId: string,
+    email: string,
+  ): Promise<TokenPair> {
     // jti is a random UUID stored (hashed) in the DB for revocation
     const jti = crypto.randomUUID();
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         { sub: userId, email },
-        { secret: this.configService.get<string>('JWT_SECRET'), expiresIn: '15m' },
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: '15m',
+        },
       ),
       this.jwtService.signAsync(
         { sub: userId, email, jti },
-        { secret: this.configService.get<string>('JWT_REFRESH_SECRET'), expiresIn: '30d' },
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: '30d',
+        },
       ),
     ]);
 

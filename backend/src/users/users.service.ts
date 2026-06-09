@@ -10,8 +10,14 @@ export class UsersService {
 
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(email: string, name: string, password: string): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ email: email.toLowerCase() });
+  async create(
+    email: string,
+    name: string,
+    password: string,
+  ): Promise<UserDocument> {
+    const existing = await this.userModel.findOne({
+      email: email.toLowerCase(),
+    });
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -32,7 +38,10 @@ export class UsersService {
     await this.userModel.findByIdAndUpdate(userId, { refreshTokenHash: hash });
   }
 
-  async verifyRefreshToken(userId: string, token: string): Promise<UserDocument | null> {
+  async verifyRefreshToken(
+    userId: string,
+    token: string,
+  ): Promise<UserDocument | null> {
     const user = await this.userModel.findById(userId);
     if (!user?.refreshTokenHash) return null;
     const valid = await bcrypt.compare(token, user.refreshTokenHash);

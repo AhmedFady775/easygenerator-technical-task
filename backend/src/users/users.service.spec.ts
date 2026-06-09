@@ -23,7 +23,9 @@ describe('UsersService', () => {
   const mockSave = jest.fn().mockResolvedValue(savedUser);
 
   // Mongoose model mock: behaves as both a class and a query object
-  const MockUserModel = jest.fn().mockImplementation(() => ({ save: mockSave })) as jest.Mock & {
+  const MockUserModel = jest
+    .fn()
+    .mockImplementation(() => ({ save: mockSave })) as jest.Mock & {
     findOne: jest.Mock;
   };
   MockUserModel.findOne = jest.fn();
@@ -45,7 +47,11 @@ describe('UsersService', () => {
       MockUserModel.findOne.mockResolvedValue(null);
       mockSave.mockResolvedValue(savedUser);
 
-      const result = await service.create('alice@example.com', 'Alice', 'Password1!');
+      const result = await service.create(
+        'alice@example.com',
+        'Alice',
+        'Password1!',
+      );
 
       expect(bcrypt.hash).toHaveBeenCalledWith('Password1!', 12);
       expect(MockUserModel).toHaveBeenCalledWith({
@@ -60,8 +66,9 @@ describe('UsersService', () => {
     it('throws ConflictException when the email is already registered', async () => {
       MockUserModel.findOne.mockResolvedValue(savedUser);
 
-      await expect(service.create('alice@example.com', 'Alice', 'Password1!'))
-        .rejects.toThrow(ConflictException);
+      await expect(
+        service.create('alice@example.com', 'Alice', 'Password1!'),
+      ).rejects.toThrow(ConflictException);
 
       expect(bcrypt.hash).not.toHaveBeenCalled();
     });
@@ -73,7 +80,9 @@ describe('UsersService', () => {
 
       const result = await service.findByEmail('alice@example.com');
 
-      expect(MockUserModel.findOne).toHaveBeenCalledWith({ email: 'alice@example.com' });
+      expect(MockUserModel.findOne).toHaveBeenCalledWith({
+        email: 'alice@example.com',
+      });
       expect(result).toEqual(savedUser);
     });
 
