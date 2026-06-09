@@ -53,10 +53,10 @@ export function AppPage() {
 
         <div className="relative text-center">
           <h1 className="text-3xl font-bold text-gray-900">
-            Good to see you, {user?.name?.split(' ')[0]}!
+            Welcome to the application.
           </h1>
           <p className="mt-3 text-base text-gray-500">
-            You're signed in as <span className="font-medium text-gray-700">{user?.email}</span>
+            Signed in as <span className="font-medium text-gray-700">{user?.email}</span>
           </p>
         </div>
       </main>

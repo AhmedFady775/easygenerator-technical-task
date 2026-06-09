@@ -17,7 +17,7 @@ Full-stack user authentication application built with NestJS (backend) and React
 
 ### Prerequisites
 - Node.js ≥ 20
-- MongoDB running locally on port 27017
+- A MongoDB Atlas cluster (or local MongoDB)
 
 ### Backend
 
@@ -142,8 +142,8 @@ push to master
 | POST   | /auth/signup   | —        | Register; sets httpOnly refresh cookie |
 | POST   | /auth/signin   | —        | Sign in; sets httpOnly refresh cookie  |
 | POST   | /auth/refresh  | cookie   | Issue new access token (token rotation) |
-| POST   | /auth/logout   | Bearer   | Revoke refresh token + clear cookie  |
-| GET    | /auth/me       | Bearer   | Get current user profile             |
+| POST   | /auth/logout   | access cookie | Revoke refresh token + clear both cookies |
+| GET    | /auth/me       | access cookie | **Protected** — get current user profile |
 | GET    | /health        | —        | Liveness probe (MongoDB ping)        |
 
 ---
@@ -199,8 +199,8 @@ easygenerator/
     ├── Dockerfile
     ├── nginx.conf
     └── src/
-        ├── api/               # Axios instance with 401 interceptor + silent refresh
-        ├── components/
-        ├── hooks/             # useAuth (access token in memory, user in sessionStorage)
+        ├── api/               # Axios instance (withCredentials — cookies sent automatically)
+        ├── components/        # AuthProvider (context), PasswordInput
+        ├── hooks/             # useAuth context consumer
         └── pages/             # SignUp, SignIn, AppPage
 ```
