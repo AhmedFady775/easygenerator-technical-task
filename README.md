@@ -128,7 +128,7 @@ push to master
     │
     └─ Deploy (only if both CI jobs pass)
            SSH into EC2
-           git pull
+           git fetch + git reset --hard origin/master
            docker compose up -d --build
            health-check /health → rollback if unhealthy
 ```
@@ -144,7 +144,8 @@ push to master
 | POST   | /auth/refresh  | cookie   | Issue new access token (token rotation) |
 | POST   | /auth/logout   | access cookie | Revoke refresh token + clear both cookies |
 | GET    | /auth/me       | access cookie | **Protected** — get current user profile |
-| GET    | /health        | —        | Liveness probe (MongoDB ping)        |
+| GET    | /health        | —        | Liveness probe                       |
+| GET    | /health/ready  | —        | Readiness probe (MongoDB ping)       |
 
 ---
 

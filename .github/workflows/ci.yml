@@ -102,6 +102,7 @@ jobs:
             EOF
 
             echo "==> Pulling latest code"
+            CURRENT_SHA=$(git rev-parse HEAD)
             git fetch origin master
             git reset --hard origin/master
 
@@ -125,8 +126,7 @@ jobs:
             if [ "$STATUS" != "200" ]; then
               echo "Health check failed — rolling back"
               docker compose down
-              git stash
-              git checkout @{-1}
+              git reset --hard "$CURRENT_SHA"
               docker compose up -d
               exit 1
             fi

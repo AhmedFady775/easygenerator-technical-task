@@ -17,9 +17,15 @@ export class HealthController {
   ) {}
 
   @Get()
-  @HealthCheck()
-  @ApiOperation({ summary: 'Liveness and readiness probe' })
+  @ApiOperation({ summary: 'Liveness probe' })
   check() {
+    return { status: 'ok' };
+  }
+
+  @Get('ready')
+  @HealthCheck()
+  @ApiOperation({ summary: 'Readiness probe' })
+  ready() {
     return this.health.check([() => this.mongoose.pingCheck('mongodb')]);
   }
 }
