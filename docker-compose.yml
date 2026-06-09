@@ -12,11 +12,14 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
 
   frontend:
     build:
       context: ./frontend
       target: production
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
     restart: unless-stopped
     ports:
       - "80:80"

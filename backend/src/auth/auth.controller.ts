@@ -28,10 +28,11 @@ import { RefreshJwtAuthGuard } from './refresh-jwt-auth.guard';
 
 const REFRESH_COOKIE = 'refreshToken';
 const ACCESS_COOKIE = 'accessToken';
+const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: COOKIE_SECURE,
   sameSite: 'strict' as const,
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   path: '/',
@@ -39,7 +40,7 @@ const REFRESH_COOKIE_OPTIONS = {
 
 const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: COOKIE_SECURE,
   sameSite: 'strict' as const,
   maxAge: 15 * 60 * 1000, // 15 minutes
   path: '/',
