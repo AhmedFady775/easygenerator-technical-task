@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -7,15 +7,15 @@ on:
     branches: [main, master]
 
 jobs:
+  # ── Backend: type-check, unit tests, e2e, build ───────────────────────────
   backend:
-    name: Backend — lint, unit tests, e2e tests
+    name: Backend CI
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -29,7 +29,7 @@ jobs:
         working-directory: backend
         run: npx tsc --noEmit
 
-      - name: Unit tests with coverage
+      - name: Unit tests
         working-directory: backend
         run: npm test -- --coverage
         env:
@@ -47,15 +47,15 @@ jobs:
         working-directory: backend
         run: npm run build
 
+  # ── Frontend: type-check and production build ─────────────────────────────
   frontend:
-    name: Frontend — type-check, build
+    name: Frontend CI
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -68,3 +68,52 @@ jobs:
       - name: Type-check & build
         working-directory: frontend
         run: npm run build
+
+  # ── Deploy to EC2 (only on push to main/master after CI passes) ───────────
+  deploy:
+    name: Deploy to EC2
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.EC2_APP_PATH }}
+
+            echo "==> Pulling latest code"
+            git pull origin master
+
+            echo "==> Rebuilding and restarting containers"
+            docker compose up -d --build --remove-orphans
+
+            echo "==> Removing dangling images"
+            docker image prune -f
+
+            echo "==> Waiting for backend health check"
+            for i in $(seq 1 15); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health || true)
+              if [ "$STATUS" = "200" ]; then
+                echo "Backend healthy after ${i}s"
+                break
+              fi
+              echo "  waiting... (${i}s)"
+              sleep 2
+            done
+
+            if [ "$STATUS" != "200" ]; then
+              echo "Health check failed — rolling back"
+              docker compose down
+              git stash
+              git checkout @{-1}
+              docker compose up -d
+              exit 1
+            fi
+
+            echo "==> Deploy complete"
