@@ -1,0 +1,11 @@
+{$CADDY_DOMAIN:localhost} {
+    encode gzip
+
+    handle_path /api/* {
+        reverse_proxy backend:3000
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
+}
